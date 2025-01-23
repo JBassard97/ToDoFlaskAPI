@@ -39,10 +39,38 @@ def get_todos():
 @app.route("/todos", methods=["POST"])
 def create_todo():
     data = request.get_json()
-    new_todo = Todo(duedate=data["dueDate"], todo=data["todo"])
+    new_todo = Todo(duedate=data["duedate"], todo=data["todo"])
     db.session.add(new_todo)
     db.session.commit()
     return jsonify(new_todo.to_dict()), 201
+
+
+# Route to delete all todos
+@app.route("/todos", methods=["DELETE"])
+def delete_all():
+    db.session.query(Todo).delete()
+    db.session.commit()
+    return jsonify([])
+
+
+# Route to get a specific todo by id
+@app.route("/todos/<int:id>", methods=["GET"])
+def get_by_id(id):
+    todo = Todo.query.get(id)
+    if todo:
+        return jsonify(todo.to_dict())
+    return jsonify({"error": "Not found"}), 404
+
+
+# Route to delete a specific todo by id
+@app.route("/todos/<int:id>", methods=["DELETE"])
+def delete_by_id(id):
+    todo = Todo.query.get(id)
+    if todo:
+        db.session.delete(todo)
+        db.session.commit()
+        return jsonify(todo.to_dict())
+    return jsonify({"error": "Not found"}), 404
 
 
 if __name__ == "__main__":
