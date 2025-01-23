@@ -56,7 +56,7 @@ def delete_all():
 # Route to get a specific todo by id
 @app.route("/todos/<int:id>", methods=["GET"])
 def get_by_id(id):
-    todo = Todo.query.get(id)
+    todo = db.session.get(Todo, id)
     if todo:
         return jsonify(todo.to_dict())
     return jsonify({"error": "Not found"}), 404
@@ -65,9 +65,22 @@ def get_by_id(id):
 # Route to delete a specific todo by id
 @app.route("/todos/<int:id>", methods=["DELETE"])
 def delete_by_id(id):
-    todo = Todo.query.get(id)
+    todo = db.session.get(Todo, id)
     if todo:
         db.session.delete(todo)
+        db.session.commit()
+        return jsonify(todo.to_dict())
+    return jsonify({"error": "Not found"}), 404
+
+
+# Route to update a specific todo by id
+@app.route("/todos/<int:id>", methods=["PUT"])
+def update_by_id(id):
+    data = request.get_json()
+    todo = db.session.get(Todo, id)
+    if todo:
+        todo.duedate = data["duedate"]
+        todo.todo = data["todo"]
         db.session.commit()
         return jsonify(todo.to_dict())
     return jsonify({"error": "Not found"}), 404
