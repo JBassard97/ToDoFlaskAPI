@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 
 # Initialize the Flask app and set up the database URI
@@ -28,6 +28,21 @@ class Todo(db.Model):
         return {"id": self.id, "duedate": self.duedate, "todo": self.todo}
 
 
+@app.before_request
+def handle_method_override():
+    if request.method == "POST" and "_method" in request.form:
+        method = request.form["_method"].upper()
+        if method in ["PUT", "DELETE"]:
+            request.environ["REQUEST_METHOD"] = method
+            print(f"Overriding method to: {method}")
+
+
+@app.route("/")
+def index():
+    todos = Todo.query.all()
+    return render_template("index.html", todos=todos)
+
+
 # Route to get all todos
 @app.route("/todos", methods=["GET"])
 def get_todos():
@@ -35,14 +50,14 @@ def get_todos():
     return jsonify([todo.to_dict() for todo in todos])
 
 
-# Route to create a new todo
 @app.route("/todos", methods=["POST"])
 def create_todo():
-    data = request.get_json()
-    new_todo = Todo(duedate=data["duedate"], todo=data["todo"])
+    duedate = request.form.get("duedate")
+    todo = request.form.get("todo")
+    new_todo = Todo(duedate=duedate, todo=todo)
     db.session.add(new_todo)
     db.session.commit()
-    return jsonify(new_todo.to_dict()), 201
+    return redirect("/")  # Redirect to the index
 
 
 # Route to delete all todos
@@ -63,27 +78,29 @@ def get_by_id(id):
 
 
 # Route to delete a specific todo by id
-@app.route("/todos/<int:id>", methods=["DELETE"])
+@app.route("/todos/<int:id>", methods=["DELETE", "POST"])
 def delete_by_id(id):
     todo = db.session.get(Todo, id)
     if todo:
         db.session.delete(todo)
         db.session.commit()
-        return jsonify(todo.to_dict())
-    return jsonify({"error": "Not found"}), 404
+    #     return jsonify(todo.to_dict())
+    # return jsonify({"error": "Not found"}), 404
+    return redirect("/")
 
 
 # Route to update a specific todo by id
-@app.route("/todos/<int:id>", methods=["PUT"])
+@app.route("/todos/update/<int:id>", methods=["POST"])
 def update_by_id(id):
-    data = request.get_json()
-    todo = db.session.get(Todo, id)
-    if todo:
-        todo.duedate = data["duedate"]
-        todo.todo = data["todo"]
+    duedate = request.form.get("duedate")
+    todo = request.form.get("todo")
+    todo_item = db.session.get(Todo, id)
+    if todo_item:
+        todo_item.duedate = duedate
+        todo_item.todo = todo
         db.session.commit()
-        return jsonify(todo.to_dict())
-    return jsonify({"error": "Not found"}), 404
+        return redirect("/")
+    return "Not found", 404
 
 
 if __name__ == "__main__":

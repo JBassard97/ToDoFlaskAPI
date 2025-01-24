@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+  </head>
+  <body>
+    <h1>Todo List</h1>
+
+    <!-- Form to Add New Todo -->
+    <h2>Add New Todo</h2>
+    <form action="/todos" method="POST">
+      <label for="duedate">Due Date:</label>
+      <input type="text" name="duedate" id="duedate" required /><br /><br />
+      <label for="todo">Todo:</label>
+      <input type="text" name="todo" id="todo" required /><br /><br />
+      <button type="submit">Add Todo</button>
+    </form>
+
+    <hr />
+
+    <!-- Display Todos -->
+    <h2>Existing Todos</h2>
+    <ul>
+      {% for todo in todos %}
+      <li>
+        <!-- {{ todo.duedate }} - {{ todo.todo }} -->
+        <!-- Form to Update Todo -->
+        <form action="/todos/update/{{ todo.id }}" method="POST">
+          <input type="hidden" name="_method" value="PUT" />
+          <input
+            type="text"
+            name="duedate"
+            value="{{ todo.duedate }}"
+            required
+          />
+          <input type="text" name="todo" value="{{ todo.todo }}" required />
+          <span style="display:flex; margin-bottom:1rem;">
+          <button type="submit">Update</button>
+        </form>
+
+        <form action="/todos/{{ todo.id }}" method="POST">
+          <input type="hidden" name="_method" value="DELETE" />
+          <button type="submit">Delete</button>
+          </span>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
